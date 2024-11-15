@@ -6,7 +6,7 @@ public class MySQLCon {
     public static void main(String args[]) {
         Connection con = null;
         PreparedStatement stmt = null;  // Change Statement to PreparedStatement
-
+            
         try {
             // Load the MySQL JDBC Driver
             Class.forName("com.mysql.jdbc.Driver"); // Updated driver class name
@@ -34,6 +34,9 @@ public class MySQLCon {
             }
             else if (userResponse.equalsIgnoreCase("insert")) {
                 // Get values for each field from the user
+                System.out.print("Enter patient id: ");
+                String patientID = sc.nextInt();
+        
                 System.out.print("Enter first name: ");
                 String firstName = sc.nextLine();
 
@@ -43,14 +46,27 @@ public class MySQLCon {
                 System.out.print("Enter date of birth (YYYY-MM-DD): ");
                 String dateOfBirth = sc.nextLine();
 
+                System.out.print("Enter address: ");
+                String address = sc.nextLine();
+
+                System.out.print("Enter city: ");
+                String city = sc.nextLine();
+
+                System.out.println("Enter an email: ");
+                String email = sc.nextLine();
+                
                 // Insert new record using the PreparedStatement function
-                String insertQuery = "INSERT INTO patientData (firstName, lastName, dateOfBirth) VALUES (?, ?, ?)";
+                String insertQuery = "INSERT INTO patientData (PatientId, firstName, lastName, dateOfBirth, address, city, email) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 stmt = con.prepareStatement(insertQuery);
 
                 // Update setString values
+                stmt.setInt(0, PatientId);
                 stmt.setString(1, firstName);
                 stmt.setString(2, lastName);
                 stmt.setDate(3, java.sql.Date.valueOf(dateOfBirth));
+                stmt.setString(4, address);
+                stmt.setString(5, city);
+                stmt.setString(6, email);
 
                 int rowsAffected = stmt.executeUpdate();
 
