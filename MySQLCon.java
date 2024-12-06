@@ -1,3 +1,5 @@
+package mysqlcon;
+
 import java.sql.*;
 import java.util.Scanner;
 
@@ -9,13 +11,15 @@ public class MySQLCon {
         Scanner sc = new Scanner(System.in);
 
 
-        System.out.println("Enter table 'patient', 'patientdata', 'patientrecord', or 'procedures': ");
+        System.out.println("Enter table 'patientdata', 'patientrecord', or 'procedures': ");
         String userTable = sc.nextLine();
 
         if (userTable.equalsIgnoreCase("patientdata")){
             patientData();
         } else if (userTable.equalsIgnoreCase("procedures")){
             procedures();
+        } else if (userTable.equalsIgnoreCase("patientrecord")){
+            patientRecord();
         }
     }
 
@@ -26,7 +30,7 @@ public class MySQLCon {
         try {
             // Load the MySQL JDBC Driver
             Class.forName("com.mysql.jdbc.Driver"); // Updated driver class name
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/patientduffgorchau?useSSL=false", "root", "Bacca101");
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/patientduffgorchau?useSSL=false", "root", "01102004");
 
             System.out.print("Enter either 'delete', 'update', or 'insert': ");
             String userResponse = sc.nextLine();
@@ -49,7 +53,7 @@ public class MySQLCon {
             else if (userResponse.equalsIgnoreCase("insert")) {
                 // Get values for each field from the user
                 System.out.print("Enter patient id: ");
-                //String patientID = sc.nextInt();
+                int PatientId = Integer.parseInt(sc.nextLine());
 
                 System.out.print("Enter first name: ");
                 String firstName = sc.nextLine();
@@ -74,13 +78,14 @@ public class MySQLCon {
                 stmt = con.prepareStatement(insertQuery);
 
                 // Update setString values
-                //stmt.setInt(0, PatientId);
-                stmt.setString(1, firstName);
-                stmt.setString(2, lastName);
-                stmt.setDate(3, java.sql.Date.valueOf(dateOfBirth));
-                stmt.setString(4, address);
-                stmt.setString(5, city);
-                stmt.setString(6, email);
+
+                stmt.setInt(1, PatientId);
+                stmt.setString(2, firstName);
+                stmt.setString(3, lastName);
+                stmt.setString(4, dateOfBirth);
+                stmt.setString(5, address);
+                stmt.setString(6, city);
+                stmt.setString(7, email);
 
                 int rowsAffected = stmt.executeUpdate();
 
@@ -134,7 +139,7 @@ public class MySQLCon {
         try {
             // Load the MySQL JDBC Driver
             Class.forName("com.mysql.jdbc.Driver"); // Updated driver class name
-            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/patientduffgorchau?useSSL=false", "root", "Bacca101");
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/patientduffgorchau?useSSL=false", "root", "01102004");
 
             System.out.print("Enter either 'delete', 'update', or 'insert': ");
             String userResponse = sc.nextLine();
@@ -202,6 +207,105 @@ public class MySQLCon {
                 String deleteQuery = "DELETE FROM procedures WHERE XRayType = ?";
                 stmt = con.prepareStatement(deleteQuery);
                 stmt.setString(1, typeToDelete);
+
+                // Execute the delete query
+                int rowsDeleted = stmt.executeUpdate();
+                if (rowsDeleted > 0) {
+                    System.out.println("Record deleted successfully.");
+                } else {
+                    System.out.println("No record found to delete.");
+                }
+            } else {
+                //checking for invalid input
+                System.out.println("Invalid input. Please enter 'update', 'insert', or 'delete'.");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("SQL Exception: " + e.getMessage());
+            //e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            System.out.println("Class Not Found Exception: " + e.getMessage());
+            //e.printStackTrace();
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+                if (con != null) con.close();
+            } catch (SQLException ex) {
+                System.out.println("Error closing resources: " + ex.getMessage());
+            }
+        }
+    }
+
+    public static void patientRecord(){
+        Connection con = null;
+        PreparedStatement stmt = null;  // Change Statement to PreparedStatement
+        Scanner sc = new Scanner(System.in);
+        try {
+            // Load the MySQL JDBC Driver
+            Class.forName("com.mysql.jdbc.Driver"); // Updated driver class name
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/patientduffgorchau?useSSL=false", "root", "01102004");
+
+            System.out.print("Enter either 'delete', 'update', or 'insert': ");
+            String userResponse = sc.nextLine();
+
+            if (userResponse.equalsIgnoreCase("update")) {
+                // Fetch and display existing records using the Select query
+                String selectQuery = "SELECT patientId, Date, XrayType, Diagnosis FROM patientRecord;";
+                stmt = con.prepareStatement(selectQuery);
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    int patientId = rs.getInt("patientID");
+                    String date = rs.getString("Date");
+                    String XrayType = rs.getString("XrayType");
+                    String Diagnosis = rs.getString("Diagnosis");
+
+                    // Display records
+                    String recordLine = "ID: " + patientId + ", Date of Xray: " + date + ", Xray Type: " + XrayType + ", Diagnosis: " + Diagnosis;
+                    System.out.println(recordLine);
+                }
+            }
+            else if (userResponse.equalsIgnoreCase("insert")) {
+                // Get values for each field from the user
+                System.out.print("Enter patient id: ");
+                int PatientId = Integer.parseInt(sc.nextLine());
+
+                System.out.print("Enter date of Xray (YYYY-MM-DD): ");
+                String Date = sc.nextLine();
+
+                System.out.print("Enter Xray Type: ");
+                String XrayType = sc.nextLine();
+
+                System.out.print("Enter Diagnosis: ");
+                String Diagnosis = sc.nextLine();
+
+
+                // Insert new record using the PreparedStatement function
+                String insertQuery = "INSERT INTO patientRecord (PatientId, Date, XrayType, Diagnosis) VALUES (?, ?, ?, ?)";
+                stmt = con.prepareStatement(insertQuery);
+
+                // Update setString values
+
+                stmt.setInt(1, PatientId);
+                stmt.setString(2, Date);
+                stmt.setString(3, XrayType);
+                stmt.setString(4, Diagnosis);
+
+                int rowsAffected = stmt.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    System.out.println("Record inserted successfully.");
+                } else {
+                    System.out.println("Record insertion failed.");
+                }
+            }
+            else if (userResponse.equalsIgnoreCase("delete")) {
+
+                System.out.print("Enter the ID of patient to delete records: ");
+                int patientIDdelete = sc.nextInt();
+
+                String deleteQuery = "DELETE FROM patientRecord WHERE (patientId = ?)";
+                stmt = con.prepareStatement(deleteQuery);
+                stmt.setInt(1, patientIDdelete);
 
                 // Execute the delete query
                 int rowsDeleted = stmt.executeUpdate();
