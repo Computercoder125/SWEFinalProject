@@ -1,0 +1,271 @@
+package mySQLCon;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.sql.*;
+
+public class MysqlConGUI {
+
+    private static Connection con = null;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new MysqlConGUI().createAndShowGUI());
+    }
+
+    public void createAndShowGUI() {
+        // Main Frame
+        JFrame frame = new JFrame("MySQL GUI Application");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 400);
+
+        // Main Panel
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(5, 1));
+
+        JLabel label = new JLabel("Select a Table:", SwingConstants.CENTER);
+        panel.add(label);
+
+        // Table Selection Dropdown
+        String[] tables = {"patientdata", "procedures", "patientrecord"};
+        JComboBox<String> tableDropdown = new JComboBox<>(tables);
+        panel.add(tableDropdown);
+
+        // Action Dropdown
+        JLabel actionLabel = new JLabel("Select an Action (insert, update, delete):", SwingConstants.CENTER);
+        panel.add(actionLabel);
+
+        JComboBox<String> actionDropdown = new JComboBox<>(new String[]{"insert", "update", "delete"});
+        panel.add(actionDropdown);
+
+        // Action Button
+        JButton actionButton = new JButton("Perform Action");
+        panel.add(actionButton);
+
+        // Add panel to frame
+        frame.add(panel);
+
+        // Button Action
+        actionButton.addActionListener(e -> {
+            String selectedTable = (String) tableDropdown.getSelectedItem();
+            String selectedAction = (String) actionDropdown.getSelectedItem();
+
+            switch (selectedAction) {
+                case "insert":
+                    showInsertForm(selectedTable);
+                    break;
+                case "update":
+                    showUpdateForm(selectedTable);
+                    break;
+                case "delete":
+                    showDeleteForm(selectedTable);
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(frame, "Invalid selection");
+            }
+        });
+
+        // Show frame
+        frame.setVisible(true);
+    }
+
+    public static void showInsertForm(String tableName) {
+        JFrame frame = new JFrame("Insert into " + tableName);
+        frame.setSize(400, 300);
+        JPanel panel = new JPanel(new GridLayout(0, 2));
+
+        // Dynamic fields for inserting
+        JTextField[] fields = createFieldsForTable(tableName, panel);
+
+        JButton insertButton = new JButton("Insert");
+        panel.add(new JLabel());
+        panel.add(insertButton);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        insertButton.addActionListener(e -> {
+            try {
+                String insertQuery = buildInsertQuery(tableName, fields.length);
+                PreparedStatement stmt = con.prepareStatement(insertQuery);
+                for (int i = 0; i < fields.length; i++) {
+                    stmt.setString(i + 1, fields[i].getText());
+                }
+                int rowsAffected = stmt.executeUpdate();
+                JOptionPane.showMessageDialog(frame, rowsAffected > 0 ? "Insert successful" : "Insert failed");
+                stmt.close();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(frame, "SQL Error: " + ex.getMessage());
+            }
+        });
+    }
+
+    public static void showUpdateForm(String tableName) {
+        JFrame frame = new JFrame("Update " + tableName);
+        frame.setSize(400, 300);
+        JPanel panel = new JPanel(new GridLayout(0, 2));
+
+        // Dynamic fields for updating
+        JTextField[] fields = createFieldsForTable(tableName, panel); // Assuming you have a function to create fields dynamically
+        panel.add(new JLabel("Enter ID to update:"));
+        JTextField idField = new JTextField();
+        panel.add(idField);
+
+        JButton updateButton = new JButton("Load Data");
+        panel.add(new JLabel());
+        panel.add(updateButton);
+
+        // Add update button for saving changes
+        JButton saveButton = new JButton("Save Changes");
+        panel.add(new JLabel());
+        panel.add(saveButton);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        // Load data on button click (perform SELECT)
+        updateButton.addActionListener(e -> {
+            try {
+                // Build the SELECT query dynamically based on table and number of fields
+                String selectQuery = buildSelectQuery(tableName, fields.length); // Assuming `fields.length` is the number of columns
+                PreparedStatement stmt = con.prepareStatement(selectQuery);
+
+                // Set the PatientID value for the WHERE clause
+                stmt.setString(1, idField.getText());
+
+                // Execute the SELECT query
+                ResultSet rs = stmt.executeQuery();
+
+                // Process the results
+                if (rs.next()) {
+                    // Populate fields with data from the database
+                    for (int i = 0; i < fields.length; i++) {
+                        fields[i].setText(rs.getString(i + 1)); // Set the value of each field based on the result
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(frame, "No data found for ID: " + idField.getText());
+                }
+
+                // Close resources
+                rs.close();
+                stmt.close();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(frame, "SQL Error: " + ex.getMessage());
+            }
+        });
+
+        // Save changes to the database when 'Save Changes' is clicked
+        saveButton.addActionListener(e -> {
+            try {
+                // Build the UPDATE query dynamically
+                String updateQuery = buildSelectQuery(tableName, fields.length);
+                PreparedStatement stmt = con.prepareStatement(updateQuery);
+
+                // Set the values from the text fields
+                for (int i = 0; i < fields.length; i++) {
+                    stmt.setString(i + 1, fields[i].getText());
+                }
+
+                // Set PatientID for the WHERE clause (to update specific record)
+                stmt.setString(fields.length + 1, idField.getText());
+
+                // Execute the UPDATE query
+                int rowsAffected = stmt.executeUpdate();
+                JOptionPane.showMessageDialog(frame, rowsAffected > 0 ? "Update successful" : "Update failed");
+
+                // Close resources
+                stmt.close();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(frame, "SQL Error: " + ex.getMessage());
+            }
+        });
+    }
+
+    public static void showDeleteForm(String tableName) {
+        JFrame frame = new JFrame("Delete from " + tableName);
+        frame.setSize(400, 150);
+        JPanel panel = new JPanel(new GridLayout(0, 2));
+
+        panel.add(new JLabel("Enter ID to delete:"));
+        JTextField idField = new JTextField();
+        panel.add(idField);
+
+        JButton deleteButton = new JButton("Delete");
+        panel.add(new JLabel());
+        panel.add(deleteButton);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        deleteButton.addActionListener(e -> {
+            try {
+                String deleteQuery = "DELETE FROM " + tableName + " WHERE PatientID = ?";
+                PreparedStatement stmt = con.prepareStatement(deleteQuery);
+                stmt.setString(1, idField.getText());
+                int rowsAffected = stmt.executeUpdate();
+                JOptionPane.showMessageDialog(frame, rowsAffected > 0 ? "Delete successful" : "No record found to delete");
+                stmt.close();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(frame, "SQL Error: " + ex.getMessage());
+            }
+        });
+    }
+
+    public static JTextField[] createFieldsForTable(String tableName, JPanel panel) {
+        // Define fields based on the table name
+        String[] fieldLabels;
+        switch (tableName) {
+            case "patientdata":
+                fieldLabels = new String[]{"Patient ID", "First Name", "Last Name", "DOB", "Address", "City", "Email", "DateOfTreatment", "Social Security #"};
+                break;
+            case "procedures":
+                fieldLabels = new String[]{"Procedure ID", "X-Ray Type", "Reason", "Doctor ID", "X-Ray Length"};
+                break;
+            case "patientrecord":
+                fieldLabels = new String[]{"Patient ID", "Date", "X-Ray Type", "Diagnosis"};
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid table name");
+        }
+
+        JTextField[] fields = new JTextField[fieldLabels.length];
+        for (int i = 0; i < fieldLabels.length; i++) {
+            panel.add(new JLabel(fieldLabels[i] + ":"));
+            fields[i] = new JTextField();
+            panel.add(fields[i]);
+        }
+        return fields;
+    }
+
+    public static String buildInsertQuery(String tableName, int numFields) {
+        StringBuilder query = new StringBuilder("INSERT INTO " + tableName + " VALUES (");
+        for (int i = 0; i < numFields; i++) {
+            query.append("?");
+            if (i < numFields - 1) query.append(", ");
+        }
+        query.append(")");
+        return query.toString();
+    }
+
+    public static String buildSelectQuery(String tableName, int numFields) {
+        StringBuilder query = new StringBuilder("SELECT ");
+        for (int i = 0; i < numFields; i++) {
+            query.append("field" + (i + 1));
+            if (i < numFields - 1) {
+                query.append(", ");
+            }
+        }
+        query.append(" FROM " + tableName + " WHERE PatientID = ?");
+        return query.toString();
+    }
+    static {
+        try {
+            // Load MySQL driver and connect
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/gorduffchau", "root", "Computergeek27!");
+        } catch (Exception ex) {
+            System.out.println("Error: " + ex.getMessage());
+        }
+    }
+}
