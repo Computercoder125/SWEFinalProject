@@ -40,18 +40,64 @@ public class MySqlCon {
             String userResponse = sc.nextLine();
 
             if (userResponse.equalsIgnoreCase("update")) {
-                // Fetch and display existing records using the Select query
-                String selectQuery = "SELECT firstname, lastname, dateofBirth FROM patientData";
-                stmt = con.prepareStatement(selectQuery);
-                ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    String firstName = rs.getString("firstName");
-                    String lastName = rs.getString("lastName");
-                    String dateOfBirth = rs.getString("dateOfBirth");
 
-                    // Display records
-                    String recordLine = "Name: " + firstName + " " + lastName + ", DOB: " + dateOfBirth;
-                    System.out.println(recordLine);
+                // Prompt the user for the Patient ID of the record they want to update
+                System.out.println("Enter the Patient ID of the record you want to update: ");
+                int patientIdToUpdate = sc.nextInt(); // Scanner instance to get user input
+
+                //go to next line
+                sc.nextLine();
+
+                // Prompt for new values
+                System.out.println("Enter new First Name: ");
+                String newFirstName = sc.nextLine();
+
+                System.out.println("Enter new Last Name: ");
+                String newLastName = sc.nextLine();
+
+                System.out.println("Enter new Date of Birth (YYYY-MM-DD): ");
+                String newDateOfBirth = sc.nextLine();
+
+                System.out.println("Enter new Address: ");
+                String newAddress = sc.nextLine();
+
+                System.out.println("Enter new City: ");
+                String newCity = sc.nextLine();
+
+                System.out.println("Enter new Email: ");
+                String newEmail = sc.nextLine();
+
+                System.out.println("Enter new Date of Treatment (YYYY-MM-DD): ");
+                String newDateOfTreatment = sc.nextLine();
+
+                System.out.println("Enter new SSN: ");
+                String newSSN = sc.nextLine();
+
+                // Update query
+                String updateQuery = "UPDATE patientData SET firstName = ?, lastName = ?, dateOfBirth = ?, address = ?, city = ?, email = ?, DateofTreatment = ?, SSN = ? WHERE patientID = ?";
+
+                stmt = con.prepareStatement(updateQuery);
+
+                // Set the parameters for the update query
+                stmt.setString(1, newFirstName);
+                stmt.setString(2, newLastName);
+                stmt.setString(3, newDateOfBirth);
+                stmt.setString(4, newAddress);
+                stmt.setString(5, newCity);
+                stmt.setString(6, newEmail);
+                stmt.setString(7, newDateOfTreatment);
+                stmt.setString(8, newSSN);
+                stmt.setInt(9, patientIdToUpdate);
+
+                // Execute the query after setting the values to update
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0)
+                {
+                    System.out.println("Record updated successfully.");
+                }
+                else //if error
+                {
+                    System.out.println("No record found with Patient ID: " + patientIdToUpdate);
                 }
             }
             else if (userResponse.equalsIgnoreCase("insert")) {
@@ -157,18 +203,39 @@ public class MySqlCon {
             String userResponse = sc.nextLine();
 
             if (userResponse.equalsIgnoreCase("update")) {
-                // Fetch and display existing records using the Select query
-                String selectQuery = "SELECT XRayType, Reason, XRayLength FROM procedures";
-                stmt = con.prepareStatement(selectQuery);
-                ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    String type = rs.getString("XRayType");
-                    String reason = rs.getString("Reason");
-                    String length = rs.getString("XRayLength");
+                System.out.println("Enter the Procedure ID of the record you want to update: ");
+                int procedureIdToUpdate = sc.nextInt(); // Use a Scanner instance to get user input
 
-                    // Display records
-                    String recordLine = "X-Ray Type: " + type + ", Reason: " + reason + ", Length: " + length + " minutes";
-                    System.out.println(recordLine);
+                // Prompt for new values after a new line
+                sc.nextLine();
+                System.out.println("Enter new X-Ray Type: ");
+                String newType = sc.nextLine();
+
+                System.out.println("Enter new Reason: ");
+                String newReason = sc.nextLine();
+
+                System.out.println("Enter new X-Ray Length (in minutes): ");
+                String newLength = sc.nextLine();
+
+                // Update query
+                String updateQuery = "UPDATE procedures SET XRayType = ?, Reason = ?, XRayLength = ? WHERE ProcedureID = ?";
+                stmt = con.prepareStatement(updateQuery);
+
+                // Set the parameters for the update
+                stmt.setString(1, newType);
+                stmt.setString(2, newReason);
+                stmt.setString(3, newLength);
+                stmt.setInt(4, procedureIdToUpdate);
+
+                // Execute the update
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0)
+                {
+                    System.out.println("Record updated successfully.");
+                }
+                else //if error
+                {
+                    System.out.println("No record found with Procedure ID: " + procedureIdToUpdate);
                 }
             }
             else if (userResponse.equalsIgnoreCase("insert")) {
@@ -224,10 +291,12 @@ public class MySqlCon {
                 int rowsDeleted = stmt.executeUpdate();
                 if (rowsDeleted > 0) {
                     System.out.println("Record deleted successfully.");
-                } else {
+                } else
+                {
                     System.out.println("No record found to delete.");
                 }
-            } else {
+            } else
+            {
                 //checking for invalid input
                 System.out.println("Invalid input. Please enter 'update', 'insert', or 'delete'.");
             }
@@ -261,19 +330,39 @@ public class MySqlCon {
             String userResponse = sc.nextLine();
 
             if (userResponse.equalsIgnoreCase("update")) {
-                // Fetch and display existing records using the Select query
-                String selectQuery = "SELECT patientId, Date, XrayType, Diagnosis FROM patientRecord;";
-                stmt = con.prepareStatement(selectQuery);
-                ResultSet rs = stmt.executeQuery();
-                while (rs.next()) {
-                    int patientId = rs.getInt("patientID");
-                    String date = rs.getString("Date");
-                    String XrayType = rs.getString("XrayType");
-                    String Diagnosis = rs.getString("Diagnosis");
+                System.out.println("Enter the Patient ID of the record you want to update: ");
+                int patientIdToUpdate = sc.nextInt(); // Use a Scanner instance to get input
 
-                    // Display records
-                    String recordLine = "ID: " + patientId + ", Date of Xray: " + date + ", Xray Type: " + XrayType + ", Diagnosis: " + Diagnosis;
-                    System.out.println(recordLine);
+                // Go to next line and then ask user for new values in the table.
+                sc.nextLine();
+                System.out.println("Enter new Date (YYYY-MM-DD): ");
+                String newDate = sc.nextLine();
+
+                System.out.println("Enter new Xray Type: ");
+                String newXrayType = sc.nextLine();
+
+                System.out.println("Enter new Diagnosis: ");
+                String newDiagnosis = sc.nextLine();
+
+                // Update statement
+                String updateQuery = "UPDATE patientrecord SET Date = ?, XrayType = ?, Diagnosis = ? WHERE patientID = ?";
+                stmt = con.prepareStatement(updateQuery);
+
+                // Set parameters to call setString method
+                stmt.setString(1, newDate);
+                stmt.setString(2, newXrayType);
+                stmt.setString(3, newDiagnosis);
+                stmt.setInt(4, patientIdToUpdate);
+
+                // Execute the update
+                int rowsAffected = stmt.executeUpdate();
+                if (rowsAffected > 0)
+                {
+                    System.out.println("Record updated successfully.");
+                }
+                else //if error
+                {
+                    System.out.println("No record found with Patient ID: " + patientIdToUpdate);
                 }
             }
             else if (userResponse.equalsIgnoreCase("insert")) {
